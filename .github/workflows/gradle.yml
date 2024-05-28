@@ -1,4 +1,4 @@
-name: Java CI with Gradle
+name: Java + Gradle
 
 on:
   push:
@@ -7,7 +7,10 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-kafka-streams:
+    defaults:
+      run:
+        working-directory: kafka-streams
 
     runs-on: ubuntu-latest
 
@@ -15,7 +18,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up JDK 17
+      - name: Set up JDK
         uses: actions/setup-java@v2
         with:
           java-version: '21'
@@ -23,12 +26,9 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-        working-directory: ./kafka-streams
 
       - name: Build with Gradle
         run: ./gradlew build
-        working-directory: ./kafka-streams
 
       - name: Test with Gradle
         run: ./gradlew test
-        working-directory: ./kafka-streams
