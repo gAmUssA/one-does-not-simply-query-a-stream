@@ -16,6 +16,8 @@ dependencies {
     // Logging dependencies
     implementation("org.slf4j:slf4j-api:2.0.7")
     implementation("ch.qos.logback:logback-classic:1.4.6")
+    // Spark Java for REST service
+    implementation("com.sparkjava:spark-core:2.9.3")
 
     // Testing dependencies
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")

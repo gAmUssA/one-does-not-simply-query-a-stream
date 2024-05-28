@@ -7,6 +7,7 @@ import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
+import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,5 +61,18 @@ public class WordCountApplicationTest {
     assertThrows(NoSuchElementException.class, () -> {
       outputTopic.readKeyValue();
     });
+  }
+
+  @Test
+  public void testStateStore() {
+    inputTopic.pipeInput("Hello Kafka Streams");
+    inputTopic.pipeInput("Kafka Streams");
+
+    ReadOnlyKeyValueStore<String, Long> keyValueStore =
+        testDriver.getKeyValueStore("word-counts-store");
+
+    assertEquals(1L, keyValueStore.get("hello"));
+    assertEquals(2L, keyValueStore.get("kafka"));
+    assertEquals(2L, keyValueStore.get("streams"));
   }
 }
