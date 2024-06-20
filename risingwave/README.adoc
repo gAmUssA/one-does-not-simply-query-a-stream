@@ -1,0 +1,119 @@
+= Word Count Example Using RisingWave
+
+== Step 1: Start RisingWave
+
+Ensure you have a running Kafka cluster and start the RisingWave server using Docker Compose. Create a `docker-compose.yml` file with the following content:
+
+[source,sh]
+----
+make
+----
+
+== Step 2: Connect to RisingWave
+
+Connect to the RisingWave database using the `psql` client container:
+
+[source,sh]
+----
+docker-compose exec psql-client psql -h risingwave -p 4566 -d dev -U root
+----
+
+== Step 3: Create Kafka Source and Sink Tables
+
+Define the Kafka source and sink tables in RisingWave.
+
+=== Create the Source Table
+
+[source,sql]
+----
+CREATE SOURCE input_stream (
+    message VARCHAR
+) WITH (
+    connector = 'kafka',
+    topic = 'input-topic',
+    properties.bootstrap.server = 'kafka:9092',
+    scan.startup.mode = 'earliest'
+) FORMAT PLAIN ENCODE JSON;
+----
+
+=== Create the Sink Table
+
+[source,sql]
+----
+CREATE SINK output_stream (word VARCHAR, word_count BIGINT) 
+WITH (
+    connector = 'kafka',
+    properties.bootstrap.server = 'kafka:9092',
+    topic = 'output-topic',
+) FORMAT PLAIN ENCODE JSON;
+----
+
+== Step 4: Run the Word Count Query
+
+Run the word count query to process the data and insert the results into the sink table:
+
+[source,sql]
+----
+CREATE MATERIALIZED VIEW word_counts AS
+SELECT word, COUNT(*) AS count
+FROM (
+    SELECT UNNEST(REGEXP_SPLIT_TO_ARRAY(message, ' ')) AS word
+    FROM input_stream
+)
+WHERE word IS NOT NULL AND word <> ''
+GROUP BY word;
+----
+
+== Step 5: Verify the Setup
+
+Produce some messages to the `input-topic` using a Kafka producer:
+
+[source,sh]
+----
+kafka-console-producer --broker-list localhost:9092 --topic input-topic
+----
+
+Enter some lines of text, for example:
+
+[source,text]
+----
+{"message": "Hello RisingWave"}
+{"message": "Hello Kafka"}
+{"message": "RisingWave and Kafka"}
+----
+
+Then, consume messages from the `output-topic` using a Kafka consumer to see the word counts:
+
+[source,sh]
+----
+kafka-console-consumer --bootstrap-server localhost:9092 --topic output-topic --from-beginning
+----
+
+You should see the JSON output of the word counts, for example:
+
+[source,json]
+----
+{"word":"hello","count":2}
+{"word":"risingwave","count":2}
+{"word":"kafka","count":2}
+{"word":"and","count":1}
+----
+
+== Explanation:
+
+1. **Source Table (`input_stream`)**:
+- Defines a RisingWave source to read from the `input-topic` with a `message` field of type `VARCHAR`.
+- Uses the Kafka connector to read from the `input-topic`.
+- Configures the Kafka consumer properties, including `bootstrap.servers` and `scan.startup.mode`.
+
+2. **Sink Table (`output_stream`)**:
+- Defines a RisingWave sink to write to the `output-topic` with fields `word` (VARCHAR) and `count` (BIGINT).
+- Uses the Kafka connector to write to the `output-topic`.
+- Configures the Kafka producer properties, including `bootstrap.servers`.
+
+3. **Word Count Query**:
+- Uses `UNNEST` and `REGEXP_SPLIT_TO_ARRAY` to split the `message` field into words.
+- Filters out `NULL` and empty words.
+- Groups by `word` and counts occurrences.
+
+This setup allows you to run the word count example using RisingWave, leveraging its SQL interface for stream processing with Kafka.

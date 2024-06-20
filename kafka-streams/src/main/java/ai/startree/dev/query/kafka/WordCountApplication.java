@@ -35,6 +35,7 @@ public class WordCountApplication {
   }
 
   public static void main(String[] args) {
+    //region populating properties
     Properties props = new Properties();
     props.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount-application");
     props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:29092");
@@ -44,6 +45,7 @@ public class WordCountApplication {
 
     String inputTopic = props.getProperty("input.topic.name", "input-topic");
     String outputTopic = props.getProperty("output.topic.name", "output-topic");
+    //endregion
 
     Topology topology = createTopology(inputTopic, outputTopic);
 
