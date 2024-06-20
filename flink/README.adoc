@@ -1,0 +1,122 @@
+= Flink SQL Word Count Example
+Vikto Gamov <viktor@startree.ai>
+v1.0, 2024-05-28
+:toc:
+
+== Step 1: Start Flink SQL Client
+
+First, make sure you have a Flink cluster running. Then start the Flink SQL Client by running:
+
+[source,sh]
+----
+make
+----
+
+== Step 2: Create Kafka Source and Sink Tables
+
+In the Flink SQL Client, create the Kafka source and sink tables. You'll need to run the following SQL statements:
+
+=== Create the Source Table
+
+[source,sql]
+----
+CREATE TABLE inputTable (
+    message STRING
+) WITH (
+    'connector' = 'kafka',
+    'topic' = 'input-topic',
+    'properties.bootstrap.servers' = 'localhost:29092',
+    'properties.group.id' = 'testGroup',
+    'scan.startup.mode' = 'earliest-offset',
+    'format' = 'json',
+    'json.fail-on-missing-field' = 'false',
+    'json.ignore-parse-errors' = 'true'
+);
+----
+
+=== Create the Sink Table
+
+[source,sql]
+----
+CREATE TABLE outputTable (
+    word STRING,
+    `count` BIGINT
+) WITH (
+    'connector' = 'kafka',
+    'topic' = 'output-topic',
+    'properties.bootstrap.servers' = 'localhost:29092',
+    'format' = 'json',
+    'json.fail-on-missing-field' = 'false',
+    'json.ignore-parse-errors' = 'true'
+);
+----
+
+== Step 3: Run the Word Count Query
+
+Now run the word count query to process the data and insert the results into the sink table:
+
+[source,sql]
+----
+SELECT word, COUNT(*) as `count`
+FROM
+    (   SELECT EXPLODE(SPLIT(message, '\\W+')) AS word
+        FROM inputTable )
+WHERE word IS NOT NULL AND word <> ''
+GROUP BY word
+----
+
+== Explanation:
+
+1. **Source Table (`inputTable`)**:
+- Defines a Kafka source table with the `value` field of type `STRING`.
+- Uses the Kafka connector to read from the `input-topic`.
+- Configures the Kafka consumer properties, including `bootstrap.servers` and `group.id`.
+- Uses JSON format for the data, allowing for missing fields and ignoring parse errors.
+
+2. **Sink Table (`outputTable`)**:
+- Defines a Kafka sink table with fields `word` (STRING) and `count` (BIGINT).
+- Uses the Kafka connector to write to the `output-topic`.
+- Configures the Kafka producer properties, including `bootstrap.servers`.
+- Uses JSON format for the data.
+
+3. **Word Count Query**:
+- Splits the `value` field into words using `SPLIT` and `EXPLODE`.
+- Filters out `NULL` and empty words.
+- Groups by `word` and counts occurrences.
+
+== Step 4: Verify the Setup
+
+To verify the setup, you can produce some messages to the `input-topic` using a Kafka producer:
+
+[source,sh]
+----
+kafka-console-producer.sh --broker-list localhost:9092 --topic input-topic
+----
+
+Enter some lines of text, for example:
+
+[source,text]
+----
+Hello Flink
+Hello Kafka
+Flink and Kafka
+----
+
+Then, consume messages from the `output-topic` using a Kafka consumer to see the word counts:
+
+[source,sh]
+----
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic output-topic --from-beginning
+----
+
+You should see the JSON output of the word counts, for example:
+
+[source,json]
+----
+{"word":"hello","count":2}
+{"word":"flink","count":2}
+{"word":"kafka","count":2}
+{"word":"and","count":1}
+----
+
+This setup allows you to run the word count example using Flink SQL directly from the Flink SQL Client.
