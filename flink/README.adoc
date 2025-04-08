@@ -42,7 +42,7 @@ CREATE TABLE outputTable (
     word STRING,
     `count` BIGINT
 ) WITH (
-    'connector' = 'kafka',
+    'connector' = 'kafka-upsert',
     'topic' = 'output-topic',
     'properties.bootstrap.servers' = 'localhost:29092',
     'format' = 'json',
