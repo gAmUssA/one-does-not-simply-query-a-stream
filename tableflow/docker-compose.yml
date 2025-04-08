@@ -1,0 +1,24 @@
+services:
+  trino:
+    container_name: trino
+    image: trinodb/trino:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - $PWD/trino/catalog:/etc/trino/catalog
+    
+  # Superset - Data visualization
+  superset:
+    build:
+      context: ./superset
+      dockerfile: Dockerfile
+    container_name: superset
+    ports:
+      - "8088:8088"
+    environment:
+      - ADMIN_USERNAME=admin
+      - ADMIN_EMAIL=admin@superset.com
+      - ADMIN_PASSWORD=admin
+      - SUPERSET_SECRET_KEY="pmFmur1eluMiQDoZA+cGHhY/cA8+0+Ko7EZi5afhXWlH1oH/rQkVHNVOY1hRXAUi"
+      - TALISMAN_ENABLED="False"
+  
