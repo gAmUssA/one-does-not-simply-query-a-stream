@@ -1,0 +1,166 @@
+= TableFlow Demo with Trino and Superset
+:toc:
+:icons: font
+:source-highlighter: highlight.js
+:experimental:
+
+== Overview
+
+This demo showcases how to use Confluent TableFlow with Trino and Apache Superset for SQL analytics on streaming data. The demo connects Trino to Confluent Cloud's TableFlow service and visualizes the data using Superset.
+
+== Prerequisites
+
+* Docker and Docker Compose
+* Access to Confluent Cloud (with API keys)
+* TableFlow enabled in your Confluent Cloud environment
+* `make` utility
+
+== Setup Instructions
+
+=== 1. Configure TableFlow Properties
+
+The `trino/catalog/tableflow.properties` file contains the configuration for connecting to Confluent Cloud TableFlow. Create this file from the example template:
+
+[source,bash]
+----
+cp trino/catalog/tableflow.properties.example trino/catalog/tableflow.properties
+----
+
+Then edit the file with your Confluent Cloud credentials:
+
+[source,properties]
+----
+connector.name=iceberg
+iceberg.catalog.type=rest
+iceberg.rest-catalog.oauth2.credential=<your-api-key>:<your-api-secret>
+iceberg.rest-catalog.security=OAUTH2
+iceberg.rest-catalog.uri=https://tableflow.us-east-2.aws.confluent.cloud/iceberg/catalog/organizations/<your-org>/environments/<your-env>
+iceberg.rest-catalog.vended-credentials-enabled=true
+
+fs.native-s3.enabled=true
+s3.region=us-east-2
+
+iceberg.security=read_only
+----
+
+=== 2. Start the Services
+
+Run the following command to start the Trino and Superset services:
+
+[source,bash]
+----
+make start
+----
+
+This command will start the Trino and Superset containers as defined in the docker-compose.yml file.
+
+=== 3. Access the Services
+
+* *Trino UI*: http://localhost:8080
+* *Superset UI*: http://localhost:8088 (login with admin/admin)
+
+=== 4. Run Example Queries
+
+To run the example queries defined in the tables.sql file:
+
+[source,bash]
+----
+make query
+----
+
+This will execute the SQL queries against your TableFlow tables.
+
+== Available Commands
+
+[cols="1,2"]
+|===
+|Command |Description
+
+|`make start`
+|Start the Trino and Superset containers
+
+|`make stop`
+|Stop all containers
+
+|`make restart`
+|Restart all containers
+
+|`make status`
+|Check the status of all containers
+
+|`make query`
+|Run example queries against TableFlow tables
+
+|`make clean`
+|Stop all containers and remove volumes
+
+|`make setup`
+|Complete setup (copy example properties file and start services)
+|===
+
+== Troubleshooting
+
+=== Container Startup Issues
+
+If you encounter issues with containers not starting properly, try the following:
+
+1. Check if there are any port conflicts:
++
+[source,bash]
+----
+docker ps -a
+----
+
+2. Check the container logs:
++
+[source,bash]
+----
+docker logs trino
+docker logs superset
+----
+
+=== Trino Connection Issues
+
+If Trino cannot connect to TableFlow, check the following:
+
+1. Verify that your Confluent Cloud credentials are correct in `trino/catalog/tableflow.properties`
+2. Check that TableFlow is enabled in your Confluent Cloud environment
+3. Check the Trino logs:
++
+[source,bash]
+----
+docker logs trino
+----
+
+== Architecture
+
+The demo consists of the following components:
+
+* *Confluent Cloud TableFlow*: Provides SQL access to streaming data in Kafka topics
+* *Trino*: Query engine that connects to TableFlow and executes SQL queries
+* *Superset*: Data visualization tool that connects to Trino for creating dashboards
+
+The data flow is as follows:
+
+1. Data is produced to Kafka topics in Confluent Cloud
+2. TableFlow creates SQL tables from the streaming data
+3. Trino connects to TableFlow and provides SQL query capabilities
+4. Superset connects to Trino and provides visualization capabilities
+
+== File Structure
+
+[source]
+----
+tableflow/
+├── docker-compose.yml           # Docker Compose configuration
+├── Makefile                     # Makefile with useful commands
+├── README.adoc                  # This README file
+├── tables.sql                   # Example SQL queries
+├── trino/
+│   └── catalog/
+│       ├── tableflow.properties        # TableFlow connection properties
+│       └── tableflow.properties.example # Example properties file
+└── superset/
+    ├── Dockerfile               # Dockerfile for Superset
+    └── init_superset.sh         # Initialization script for Superset
+----
