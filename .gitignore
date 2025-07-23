@@ -26,3 +26,6 @@ replay_pid*
 build/
 /tableflow/trino/catalog/tableflow.properties
 */bin
+*.db
+.claude/
+kafka-connect/cloud.properties

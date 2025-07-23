@@ -1,0 +1,55 @@
+services:
+  connect:
+    build: ./kafka-connect
+    hostname: connect
+    container_name: connect
+    ports:
+      - "8083:8083"
+    environment:
+      # Confluent Cloud connection will be configured via mounted properties file
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+      CONNECT_GROUP_ID: connect-cluster
+      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: connect-status
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: '3'
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: '3'
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: '3'
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: ${SCHEMA_REGISTRY_URL}
+      CONNECT_VALUE_CONVERTER_BASIC_AUTH_CREDENTIALS_SOURCE: USER_INFO
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO: ${SCHEMA_REGISTRY_API_KEY}:${SCHEMA_REGISTRY_API_SECRET}
+      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_REST_PORT: 8083
+      CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
+      # Confluent Cloud security settings
+      CONNECT_SECURITY_PROTOCOL: SASL_SSL
+      CONNECT_SASL_MECHANISM: PLAIN
+      CONNECT_SASL_JAAS_CONFIG: ${SASL_JAAS_CONFIG}
+      CONNECT_BOOTSTRAP_SERVERS: ${BOOTSTRAP_SERVERS}
+      CONNECT_PRODUCER_SECURITY_PROTOCOL: SASL_SSL
+      CONNECT_PRODUCER_SASL_MECHANISM: PLAIN
+      CONNECT_PRODUCER_SASL_JAAS_CONFIG: ${SASL_JAAS_CONFIG}
+      CONNECT_CONSUMER_SECURITY_PROTOCOL: SASL_SSL
+      CONNECT_CONSUMER_SASL_MECHANISM: PLAIN
+      CONNECT_CONSUMER_SASL_JAAS_CONFIG: ${SASL_JAAS_CONFIG}
+    volumes:
+      - ./kafka-connect/data:/data
+      - ./kafka-connect/cloud.properties:/etc/kafka/cloud.properties
+      - ./kafka-connect/configure-jdbc-sink.sh:/etc/kafka/configure-jdbc-sink.sh
+      - ./kafka-connect/flight.avsc:/etc/kafka/flight.avsc
+    command: |
+      bash -c '
+        /usr/local/bin/init-sqlite.sh
+        /etc/confluent/docker/run
+      '
+
+  sqlite:
+    image: keinos/sqlite3:latest
+    container_name: sqlite
+    volumes:
+      - ./kafka-connect/data:/data
+      - ./kafka-connect/init-sqlite.sh:/data/init-sqlite.sh
+    command: tail -f /dev/null
