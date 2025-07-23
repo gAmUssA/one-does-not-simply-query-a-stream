@@ -1,0 +1,19 @@
+# Topics to manage
+topics=topic1
+
+# Key serdes (default is binary)
+key.serdes=topic1=string
+
+# Value serdes (default is latest)
+value.serdes=topic1=latest
+
+# The Schema Registry URL
+schema.registry.url=http://localhost:8081
+#basic.auth.credentials.source=USER_INFO
+#basic.auth.user.info={{ SR_API_KEY }}:{{ SR_API_SECRET }}
+
+# The bootstrap servers for your Kafka cluster
+bootstrap.servers=localhost:9092
+#security.protocol=SASL_SSL
+#sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username='{{ CLUSTER_API_KEY }}' password='{{ CLUSTER_API_SECRET }}';
+#sasl.mechanism=PLAIN
