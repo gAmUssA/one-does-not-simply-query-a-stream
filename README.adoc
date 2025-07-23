@@ -1,0 +1,242 @@
+= One Does Not Simply Query a Stream - Project Analysis
+:toc:
+:icons: font
+:source-highlighter: highlight.js
+:experimental:
+
+== :mag: Project Summary
+
+This project demonstrates different approaches to stream processing using various technologies:
+
+* *Apache Kafka* - Used as the core messaging platform
+* *Kafka Streams* - For Java-based stream processing
+* *Apache Flink* - For SQL-based stream processing
+* *ksqlDB* - For SQL-like stream processing on Kafka
+* *RisingWave* - For PostgreSQL-compatible stream processing
+* *TableFlow* - For data visualization using Trino and Apache Superset
+
+The project implements a word count example across different stream processing technologies, as well as a flight status tracking system. It uses Docker Compose for containerization and provides a Makefile with emoji-enhanced commands for better user experience.
+
+== :rocket: Architecture Overview
+
+The architecture consists of several components:
+
+1. *Data Generation* - A flight data generator produces events to Kafka
+2. *Stream Processing* - Multiple implementations (Kafka Streams, Flink, ksqlDB, RisingWave)
+3. *Data Storage* - SQLite database for storing flight status
+4. *Data Visualization* - Apache Superset connected to Trino for querying data
+
+== :wrench: Technology Stack
+
+* *Messaging*: Apache Kafka 3.9.0 (KRaft mode without ZooKeeper)
+* *Stream Processing*: 
+  ** Kafka Streams 3.5.0 (Java implementation)
+  ** Apache Flink (SQL implementation)
+  ** ksqlDB (SQL-like implementation)
+  ** RisingWave (PostgreSQL-compatible implementation)
+* *Data Storage*: SQLite
+* *Data Visualization*: Apache Superset + Trino
+* *Build System*: Gradle with Kotlin DSL
+* *Containerization*: Docker Compose
+* *Documentation*: AsciiDoc
+
+== :bulb: Improvement Suggestions
+
+=== 1. Version Alignment
+
+[source,asciidoc]
+----
+:warning-caption: :warning:
+
+[WARNING]
+====
+* Kafka version in docker-compose.yml (3.9.0) doesn't match the user's preferred version (3.8.0)
+* Kafka Streams version (3.5.0) doesn't match the user's preferred version (3.8.0)
+* No explicit Flink version control to ensure 1.20 is used
+====
+----
+
+=== 2. Code Structure Improvements
+
+[source,asciidoc]
+----
+:tip-caption: :bulb:
+
+[TIP]
+====
+* *Package Structure*: The `MovieProducer.java` uses package `com.example` instead of the project's package structure `ai.startree.dev.query.kafka`
+* *Consistent Naming*: Align class names with functionality (e.g., rename `MovieProducer` to `FlightStatusProducer`)
+* *TODOs Cleanup*: Remove TODOs like "TODO versions" in build.gradle.kts and "TODO - configurable (?)" in WordCountService.java
+====
+----
+
+=== 3. Documentation Enhancements
+
+[source,asciidoc]
+----
+:tip-caption: :bulb:
+
+[TIP]
+====
+* Create a comprehensive root README.adoc that explains:
+  ** Project overview and purpose
+  ** How the different implementations relate to each other
+  ** Step-by-step guide to run the complete project
+  ** Architecture diagram showing data flow
+* Add diagrams using PlantUML or Mermaid for better visualization
+====
+----
+
+=== 4. Build System Improvements
+
+[source,asciidoc]
+----
+:tip-caption: :bulb:
+
+[TIP]
+====
+* Update Gradle to use Kotlin DSL consistently across all modules
+* Add version catalogs for dependency management
+* Implement a root Gradle project with subprojects for each implementation
+* Align all dependency versions across modules
+====
+----
+
+=== 5. Testing Enhancements
+
+[source,asciidoc]
+----
+:tip-caption: :bulb:
+
+[TIP]
+====
+* Add comprehensive unit tests for all implementations
+* Implement integration tests using testcontainers
+* Add performance benchmarks to compare different implementations
+* Create CI/CD pipeline using GitHub Actions
+====
+----
+
+=== 6. Operational Improvements
+
+[source,asciidoc]
+----
+:tip-caption: :bulb:
+
+[TIP]
+====
+* Create a unified Makefile at the root level with colorful emoji commands
+* Add health checks for all services in docker-compose.yml
+* Implement proper logging configuration across all components
+* Add monitoring using Prometheus and Grafana
+====
+----
+
+=== 7. Feature Enhancements
+
+[source,asciidoc]
+----
+:tip-caption: :bulb:
+
+[TIP]
+====
+* Implement a more complex example beyond word count (the flight status is a good start)
+* Add a unified web UI to compare results from different implementations
+* Implement exactly-once semantics across all implementations
+* Add schema registry integration for data consistency
+====
+----
+
+== :hammer_and_wrench: Implementation Plan
+
+Here's a suggested implementation plan for these improvements:
+
+[source,asciidoc]
+----
+:task-caption: :clipboard:
+
+[discrete]
+=== Phase 1: Alignment & Cleanup
+
+[task]
+* Update Kafka and Kafka Streams versions to 3.8.0
+* Fix package structure inconsistencies
+* Clean up TODOs
+* Create comprehensive root README.adoc
+
+[discrete]
+=== Phase 2: Build & Test Improvements
+
+[task]
+* Implement root Gradle project with subprojects
+* Add version catalogs
+* Enhance unit and integration tests
+* Set up GitHub Actions CI/CD
+
+[discrete]
+=== Phase 3: Operational & Feature Enhancements
+
+[task]
+* Create unified Makefile with emoji commands
+* Add monitoring and health checks
+* Implement more complex examples
+* Create unified web UI
+----
+
+== :chart_with_upwards_trend: Comparison of Implementations
+
+[cols="1,2,2,2"]
+|===
+|Technology |Strengths |Weaknesses |Best Use Cases
+
+|Kafka Streams
+|Java API, stateful processing, exactly-once semantics
+|Java-only, steeper learning curve
+|Complex event processing, stateful applications
+
+|Apache Flink
+|SQL interface, powerful windowing, batch+stream
+|More complex deployment
+|Complex analytics, large-scale processing
+
+|ksqlDB
+|SQL-like syntax, easy to use, interactive
+|Limited advanced features
+|Simple analytics, stream-table joins
+
+|RisingWave
+|PostgreSQL compatibility, materialized views
+|Newer technology, less mature
+|SQL-centric teams, materialized views
+
+|Kafka Connect
+|Easy integration with external systems, declarative configuration
+|Limited transformation capabilities
+|Data ingestion/egress, CDC, database integration
+|===
+
+== :airplane: Kafka Connect JDBC Sink Demo
+
+The project includes a Kafka Connect demo that shows how to use Kafka Connect with a JDBC Sink connector to stream flight status data from a Kafka topic to a SQLite database. The demo uses Confluent Cloud for Kafka and Schema Registry.
+
+=== Running the Demo
+
+To run the Kafka Connect demo:
+
+1. Navigate to the project root directory
+2. Configure your Confluent Cloud credentials in `kafka-connect/cloud.properties`
+3. Run the setup command:
++
+[source,bash]
+----
+make setup
+----
+
+4. Verify the setup by querying the flight status data:
++
+[source,bash]
+----
+make query
+----
+
+For detailed instructions, refer to the link:kafka-connect/README.adoc[Kafka Connect Demo README].

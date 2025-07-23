@@ -1,0 +1,225 @@
+= Kafka Connect JDBC Sink Demo
+:toc:
+:icons: font
+:source-highlighter: highlight.js
+:experimental:
+
+== Overview
+
+This demo shows how to use Kafka Connect with a JDBC Sink connector to stream data from a Kafka topic to a SQLite database. The demo uses Confluent Cloud for Kafka and Schema Registry, and a local SQLite database for storage.
+
+== Prerequisites
+
+* Docker and Docker Compose
+* Access to Confluent Cloud (with API keys)
+* `make` utility
+
+== Setup Instructions
+
+=== 1. Configure Confluent Cloud Properties
+
+The `cloud.properties` file contains the configuration for connecting to Confluent Cloud. Make sure this file is properly configured with your Confluent Cloud credentials:
+
+[source,properties]
+----
+bootstrap.servers=<your-bootstrap-servers>
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username='<your-api-key>' password='<your-api-secret>';
+schema.registry.url=<your-schema-registry-url>
+schema.registry.basic.auth.user.info=<your-schema-registry-api-key>:<your-schema-registry-api-secret>
+topic.name=flights
+----
+
+=== 2. Start the Services
+
+Run the following command to bootstrap the Confluent Cloud configuration, start the services, initialize the SQLite database, and configure the Kafka Connect JDBC sink:
+
+[source,bash]
+----
+make setup
+----
+
+This command will:
+
+1. Bootstrap Confluent Cloud configuration from `cloud.properties`
+2. Start the Kafka Connect and SQLite containers
+3. Initialize the SQLite database with the required schema
+4. Configure the Kafka Connect JDBC sink connector
+
+=== 3. Verify the Setup
+
+To verify that everything is working correctly, you can query the SQLite database:
+
+[source,bash]
+----
+make query
+----
+
+This will show the latest flight status records in the database.
+
+== Available Commands
+
+[cols="1,2"]
+|===
+|Command |Description
+
+|`make start`
+|Start the Kafka Connect and SQLite containers
+
+|`make stop`
+|Stop all containers
+
+|`make init`
+|Initialize the SQLite database
+
+|`make configure`
+|Configure the Kafka Connect JDBC sink connector
+
+|`make query`
+|Query the flight status data from the SQLite database
+
+|`make clean`
+|Stop all containers and remove volumes
+
+|`make setup`
+|Complete setup (start, init, configure)
+|===
+
+== Troubleshooting
+
+=== Container Startup Issues
+
+If you encounter issues with containers not starting properly, try the following:
+
+1. Check if there are any port conflicts:
++
+[source,bash]
+----
+docker ps -a
+----
+
+2. Check the container logs:
++
+[source,bash]
+----
+docker logs connect
+docker logs sqlite
+----
+
+=== Connector Configuration Issues
+
+If the connector configuration fails, check the following:
+
+1. Verify that your Confluent Cloud credentials are correct in `cloud.properties`
+2. Check the Kafka Connect logs:
++
+[source,bash]
+----
+docker logs connect
+----
+
+3. Verify that the Kafka Connect REST API is accessible:
++
+[source,bash]
+----
+curl -s http://localhost:8083/connectors
+----
+
+== Architecture
+
+The demo consists of the following components:
+
+* *Confluent Cloud*: Hosts the Kafka broker and Schema Registry
+* *Kafka Connect*: Runs in a Docker container and hosts the JDBC Sink connector
+* *SQLite*: Runs in a Docker container and stores the flight status data
+
+The data flow is as follows:
+
+1. Flight status events are produced to the `flights` topic in Confluent Cloud
+2. The JDBC Sink connector consumes these events and writes them to the SQLite database
+3. The SQLite database stores the flight status data in the `flight_status` table
+
+== File Structure
+
+[source]
+----
+kafka-connect/
+├── Dockerfile                    # Dockerfile for Kafka Connect
+├── bootstrap-connector.sh        # Script to bootstrap Confluent Cloud configuration
+├── cloud.properties              # Confluent Cloud configuration
+├── configure-jdbc-sink.sh        # Script to configure the JDBC Sink connector
+├── connect-distributed.properties # Kafka Connect configuration
+├── flight.avsc                   # Avro schema for flight status events
+├── init-sqlite.sh                # Script to initialize the SQLite database
+└── query-flights.sh              # Script to query the flight status data
+----
+
+== Schema
+
+The flight status events follow this Avro schema:
+
+[source,json]
+----
+{
+  "type": "record",
+  "name": "Flight",
+  "namespace": "io.confluent.developer.models.flight",
+  "doc": "Schema for flight data",
+  "fields": [
+    {
+      "name": "flightNumber",
+      "type": "string",
+      "doc": "Flight number"
+    },
+    {
+      "name": "airline",
+      "type": "string",
+      "doc": "Airline operating the flight"
+    },
+    {
+      "name": "origin",
+      "type": "string",
+      "doc": "Origin airport code"
+    },
+    {
+      "name": "destination",
+      "type": "string",
+      "doc": "Destination airport code"
+    },
+    {
+      "name": "scheduledDeparture",
+      "type": "long",
+      "doc": "Scheduled departure time in milliseconds since epoch"
+    },
+    {
+      "name": "actualDeparture",
+      "type": [
+        "null",
+        "long"
+      ],
+      "default": null,
+      "doc": "Actual departure time in milliseconds since epoch"
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "doc": "Current status of the flight"
+    }
+  ]
+}
+----
+
+The SQLite database has a corresponding table structure:
+
+[source,sql]
+----
+CREATE TABLE IF NOT EXISTS flight_status (
+    flight_number TEXT PRIMARY KEY,
+    airline TEXT,
+    departure_airport TEXT,
+    arrival_airport TEXT,
+    scheduled_departure TEXT,
+    actual_departure TEXT,
+    status TEXT,
+    event_timestamp BIGINT
+);
+----
