@@ -29,3 +29,7 @@ build/
 *.db
 .claude/
 kafka-connect/cloud.properties
+*.parquet
+kwack/kwack.properties
+kwack/kwack-*
+kwack/tmp
