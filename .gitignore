@@ -33,3 +33,5 @@ kafka-connect/cloud.properties
 kwack/kwack.properties
 kwack/kwack-*
 kwack/tmp
+kafka-connect/data
+.env

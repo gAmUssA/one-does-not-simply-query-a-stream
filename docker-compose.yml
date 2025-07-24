@@ -9,9 +9,9 @@ services:
       # Confluent Cloud connection will be configured via mounted properties file
       CONNECT_REST_ADVERTISED_HOST_NAME: connect
       CONNECT_GROUP_ID: connect-cluster
-      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
-      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
-      CONNECT_STATUS_STORAGE_TOPIC: connect-status
+      CONNECT_CONFIG_STORAGE_TOPIC: jdbc-connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: jdbc-connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: jdbc-connect-status
       CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: '3'
       CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: '3'
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: '3'
@@ -37,7 +37,7 @@ services:
       CONNECT_CONSUMER_SASL_JAAS_CONFIG: ${SASL_JAAS_CONFIG}
     volumes:
       - ./kafka-connect/data:/data
-      - ./kafka-connect/cloud.properties:/etc/kafka/cloud.properties
+      - ./.env:/etc/kafka/.env
       - ./kafka-connect/configure-jdbc-sink.sh:/etc/kafka/configure-jdbc-sink.sh
       - ./kafka-connect/flight.avsc:/etc/kafka/flight.avsc
     command: |

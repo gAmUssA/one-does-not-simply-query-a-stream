@@ -61,12 +61,7 @@ init: ## 📦 Initialize SQLite database
 configure: kc-configure ## 🔌 Configure Kafka Connect (alias for kc-configure)
 > @printf "$(GREEN)✅ Configuration complete$(NC)\n"
 
-query: ## 🔍 Query flight status
-> @printf "$(BLUE)🔍 Querying flight status data...$(NC)\n"
-> docker exec sqlite sqlite3 /data/flights.db \
->   ".mode column" \
->   ".headers on" \
->   "SELECT flightNumber, airline, origin as departure_airport, destination as arrival_airport, datetime(scheduledDeparture/1000, 'unixepoch') as scheduled_departure, datetime(actualDeparture/1000, 'unixepoch') as actual_departure, status FROM flights ORDER BY scheduledDeparture ASC LIMIT 10;"
+query: kc-query ## 🔍 Query flight status (alias for kc-query)
 
 clean: stop ## 🧹 Clean up (stop and remove volumes)
 > @printf "$(RED)🧹 Cleaning up volumes...$(NC)\n"
