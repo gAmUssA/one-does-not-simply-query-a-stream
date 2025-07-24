@@ -1,14 +1,19 @@
 #!/bin/bash
 
-# Source environment variables from .env file if it exists
-if [ -f "/etc/kafka/cloud.properties" ]; then
-    # Extract values directly from cloud.properties
-    SCHEMA_REGISTRY_URL=$(grep "schema.registry.url" /etc/kafka/cloud.properties | cut -d'=' -f2)
-    SCHEMA_REGISTRY_API_INFO=$(grep "schema.registry.basic.auth.user.info" /etc/kafka/cloud.properties | cut -d'=' -f2)
-    TOPIC_NAME=$(grep "topic.name" /etc/kafka/cloud.properties | cut -d'=' -f2)
+# Source environment variables from .env file in the project root
+ENV_FILE="/etc/kafka/.env"
 
-    # Split schema registry API info into key and secret
-    IFS=':' read -r SCHEMA_REGISTRY_API_KEY SCHEMA_REGISTRY_API_SECRET <<< "$SCHEMA_REGISTRY_API_INFO"
+if [ -f "$ENV_FILE" ]; then
+    # Extract values directly from .env file
+    SCHEMA_REGISTRY_URL=$(grep "SCHEMA_REGISTRY_URL" "$ENV_FILE" | cut -d'=' -f2)
+    SCHEMA_REGISTRY_API_KEY=$(grep "SCHEMA_REGISTRY_API_KEY" "$ENV_FILE" | cut -d'=' -f2)
+    SCHEMA_REGISTRY_API_SECRET=$(grep "SCHEMA_REGISTRY_API_SECRET" "$ENV_FILE" | cut -d'=' -f2)
+    TOPIC_NAME=$(grep "TOPIC_NAME" "$ENV_FILE" | cut -d'=' -f2)
+    
+    # Log successful extraction
+    echo "Successfully loaded configuration from $ENV_FILE"
+else
+    echo "Warning: $ENV_FILE not found. Using default values if available."
 fi
 
 # Wait for Kafka Connect to be ready
@@ -36,19 +41,24 @@ cat > /tmp/connector-config.json << EOF
     "auto.evolve": "true",
     "insert.mode": "upsert",
     "pk.mode": "record_value",
-    "pk.fields": "flightNumber",
-    "transforms": "TimestampConverter,RenameFields",
+    "pk.fields": "flight_number",
+    "transforms": "TimestampConverter,TimestampConverterActual,RenameFields",
     "transforms.TimestampConverter.type": "org.apache.kafka.connect.transforms.TimestampConverter\$Value",
     "transforms.TimestampConverter.field": "scheduledDeparture",
     "transforms.TimestampConverter.target.type": "string",
     "transforms.TimestampConverter.format": "yyyy-MM-dd HH:mm:ss",
+    "transforms.TimestampConverterActual.type": "org.apache.kafka.connect.transforms.TimestampConverter\$Value",
+    "transforms.TimestampConverterActual.field": "actualDeparture",
+    "transforms.TimestampConverterActual.target.type": "string",
+    "transforms.TimestampConverterActual.format": "yyyy-MM-dd HH:mm:ss",
     "transforms.RenameFields.type": "org.apache.kafka.connect.transforms.ReplaceField\$Value",
-    "transforms.RenameFields.renames": "{\"flightNumber\":\"flight_number\",\"airline\":\"airline\",\"origin\":\"departure_airport\",\"destination\":\"arrival_airport\",\"scheduledDeparture\":\"scheduled_departure_time\",\"actualDeparture\":\"actual_departure_time\",\"status\":\"status\"}",
+    "transforms.RenameFields.renames": "flightNumber:flight_number,airline:airline,origin:departure_airport,destination:arrival_airport,scheduledDeparture:scheduled_departure_time,actualDeparture:actual_departure_time,status:status",
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
     "value.converter": "io.confluent.connect.avro.AvroConverter",
     "value.converter.schema.registry.url": "${SCHEMA_REGISTRY_URL}",
     "value.converter.basic.auth.credentials.source": "USER_INFO",
-    "value.converter.schema.registry.basic.auth.user.info": "${SCHEMA_REGISTRY_API_KEY}:${SCHEMA_REGISTRY_API_SECRET}"
+    "value.converter.schema.registry.basic.auth.user.info": "${SCHEMA_REGISTRY_API_KEY}:${SCHEMA_REGISTRY_API_SECRET}",
+    "value.converter.enhanced.avro.schema.support": "true"
   }
 }
 EOF

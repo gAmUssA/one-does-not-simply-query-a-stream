@@ -1,38 +1,48 @@
 #!/bin/bash
 
-# Script to bootstrap Kafka Connect configuration from cloud.properties
+# Script to validate .env file for Kafka Connect configuration
 
-echo "Bootstrapping Kafka Connect configuration from cloud.properties..."
+echo "Validating .env file for Kafka Connect configuration..."
 
-# Check if cloud.properties exists
-if [ ! -f "kafka-connect/cloud.properties" ]; then
-    echo "Error: cloud.properties file not found in kafka-connect directory"
+# Check if .env exists
+if [ ! -f ".env" ]; then
+    echo "Error: .env file not found in project root directory"
     exit 1
 fi
 
-# Extract values from cloud.properties
-BOOTSTRAP_SERVERS=$(grep "bootstrap.servers" kafka-connect/cloud.properties | cut -d'=' -f2)
-SCHEMA_REGISTRY_URL=$(grep "schema.registry.url" kafka-connect/cloud.properties | cut -d'=' -f2)
-SCHEMA_REGISTRY_API_INFO=$(grep "schema.registry.basic.auth.user.info" kafka-connect/cloud.properties | cut -d'=' -f2)
-SASL_JAAS_CONFIG=$(grep "sasl.jaas.config" kafka-connect/cloud.properties | cut -d'=' -f2-)
-TOPIC_NAME=$(grep "topic.name" kafka-connect/cloud.properties | cut -d'=' -f2)
+# Extract and validate required values from .env
+BOOTSTRAP_SERVERS=$(grep "BOOTSTRAP_SERVERS" .env | cut -d'=' -f2)
+SCHEMA_REGISTRY_URL=$(grep "SCHEMA_REGISTRY_URL" .env | cut -d'=' -f2)
+SCHEMA_REGISTRY_API_KEY=$(grep "SCHEMA_REGISTRY_API_KEY" .env | cut -d'=' -f2)
+SCHEMA_REGISTRY_API_SECRET=$(grep "SCHEMA_REGISTRY_API_SECRET" .env | cut -d'=' -f2)
+SASL_JAAS_CONFIG=$(grep "SASL_JAAS_CONFIG" .env | cut -d'=' -f2-)
+TOPIC_NAME=$(grep "TOPIC_NAME" .env | cut -d'=' -f2)
 
-# Split schema registry API info into key and secret
-IFS=':' read -r SCHEMA_REGISTRY_API_KEY SCHEMA_REGISTRY_API_SECRET <<< "$SCHEMA_REGISTRY_API_INFO"
+# Validate required values
+if [ -z "$BOOTSTRAP_SERVERS" ]; then
+    echo "Error: BOOTSTRAP_SERVERS not found in .env file"
+    exit 1
+fi
 
-# Create .env file for docker-compose
-cat > .env << EOF
-BOOTSTRAP_SERVERS=$BOOTSTRAP_SERVERS
-SCHEMA_REGISTRY_URL=$SCHEMA_REGISTRY_URL
-SCHEMA_REGISTRY_API_KEY=$SCHEMA_REGISTRY_API_KEY
-SCHEMA_REGISTRY_API_SECRET=$SCHEMA_REGISTRY_API_SECRET
-SASL_JAAS_CONFIG=$SASL_JAAS_CONFIG
-TOPIC_NAME=$TOPIC_NAME
-EOF
+if [ -z "$SCHEMA_REGISTRY_URL" ]; then
+    echo "Error: SCHEMA_REGISTRY_URL not found in .env file"
+    exit 1
+fi
 
-echo "Environment variables set in .env file"
-echo "Bootstrap servers: $BOOTSTRAP_SERVERS"
-echo "Schema Registry URL: $SCHEMA_REGISTRY_URL"
-echo "Topic name: $TOPIC_NAME"
+if [ -z "$SCHEMA_REGISTRY_API_KEY" ] || [ -z "$SCHEMA_REGISTRY_API_SECRET" ]; then
+    echo "Error: Schema Registry credentials not found in .env file"
+    exit 1
+fi
 
-echo "Kafka Connect configuration bootstrapped successfully"
+if [ -z "$SASL_JAAS_CONFIG" ]; then
+    echo "Error: SASL_JAAS_CONFIG not found in .env file"
+    exit 1
+fi
+
+echo "✅ .env file validated successfully"
+echo "📊 Configuration summary:"
+echo "🔌 Bootstrap servers: $BOOTSTRAP_SERVERS"
+echo "🔐 Schema Registry URL: $SCHEMA_REGISTRY_URL"
+echo "📝 Topic name: ${TOPIC_NAME:-flights}"
+
+echo "✨ Kafka Connect configuration validated successfully"

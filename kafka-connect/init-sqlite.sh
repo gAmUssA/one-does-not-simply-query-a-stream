@@ -4,7 +4,7 @@ echo "Initializing SQLite database..."
 
 # Create SQLite database and table
 cat > /data/init.sql << 'EOF'
-CREATE TABLE IF NOT EXISTS flight_status (
+CREATE TABLE IF NOT EXISTS flights (
     flight_number TEXT PRIMARY KEY,
     airline TEXT,
     departure_airport TEXT,
