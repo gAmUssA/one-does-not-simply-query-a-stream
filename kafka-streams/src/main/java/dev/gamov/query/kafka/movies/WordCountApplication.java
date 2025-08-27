@@ -50,7 +50,9 @@ public class WordCountApplication {
         .toStream()
         .to(outputTopic, Produced.with(Serdes.String(), Serdes.Long()));
 
-    return builder.build();
+    final Topology build = builder.build();
+    System.out.println(build.describe());
+    return build;
   }
 
   /**
