@@ -1,4 +1,4 @@
-package ai.startree.dev.query.kafka;
+package dev.gamov.query.kafka.movies;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
