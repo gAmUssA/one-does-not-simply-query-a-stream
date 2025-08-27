@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flights Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0e1116;
+      --panel: #151a21;
+      --muted: #9aa4ad;
+      --text: #e6edf3;
+      --accent: #4cc38a; /* green */
+      --accent-2: #3b82f6; /* blue */
+      --danger: #ef4444;
+      --border: #232b36;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 800px at 80% -20%, rgba(59,130,246,0.08), transparent),
+                  radial-gradient(1000px 700px at -10% 0%, rgba(76,195,138,0.08), transparent),
+                  var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.45;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(76,195,138,0.12);
+      border: 1px solid rgba(76,195,138,0.35);
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    @media (min-width: 900px) {
+      .grid { grid-template-columns: 1.1fr 0.9fr; }
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-title { font-weight: 600; }
+    .card-body { padding: 16px; }
+    .muted { color: var(--muted); }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 8px; }
+    thead th { font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--border); }
+    tbody tr { border-bottom: 1px solid var(--border); }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+    }
+    .pill.good { color: var(--accent); border-color: rgba(76,195,138,0.35); background: rgba(76,195,138,0.12); }
+    .pill.warn { color: #f59e0b; border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.12); }
+    .pill.bad { color: var(--danger); border-color: rgba(239,68,68,0.35); background: rgba(239,68,68,0.12); }
+
+    .row { display: flex; gap: 8px; }
+    .grow { flex: 1; }
+    input, button {
+      height: 38px; border-radius: 8px; border: 1px solid var(--border);
+      background: #0f141a; color: var(--text);
+    }
+    input { width: 100%; padding: 0 12px; outline: none; }
+    button {
+      padding: 0 14px; cursor: pointer; font-weight: 600; letter-spacing: 0.2px;
+      background: linear-gradient(180deg, rgba(59,130,246,0.18), rgba(59,130,246,0.12));
+      border-color: rgba(59,130,246,0.45);
+    }
+    .helper { font-size: 12px; color: var(--muted); margin-top: 8px; }
+    .footer { text-align: center; color: var(--muted); margin-top: 18px; font-size: 12px; }
+  </style>
+</head>
+<body>
+<div id="app" class="container" v-cloak>
+  <header>
+    <div class="title">
+      ✈️ Flights Dashboard
+      <span class="badge">Kafka Streams • Javalin • Vue</span>
+    </div>
+    <div class="muted">FLIGHTS_QUERY_PORT={{ port }}</div>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <div class="card-header">
+        <div class="card-title">Delayed Flights per Origin</div>
+        <div class="muted">auto-refresh: {{ refreshSeconds }}s</div>
+      </div>
+      <div class="card-body">
+        <table>
+          <thead>
+            <tr><th>Airport</th><th>Delayed count</th></tr>
+          </thead>
+          <tbody>
+            <tr v-for="(count, airport) in delayedSorted" :key="airport">
+              <td>{{ airport }}</td>
+              <td><span class="pill" :class="{bad: count>5, warn: count>0 && count<=5, good: count===0}">{{ count }}</span></td>
+            </tr>
+            <tr v-if="Object.keys(delayed).length===0"><td colspan="2" class="muted">No data yet</td></tr>
+          </tbody>
+        </table>
+        <div class="helper">Shows counts from the delayed-by-origin-store. Endpoint: GET <code>/airports/delayed</code></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <div class="card-title">Find Flight by Number</div>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <input class="grow" v-model="query" placeholder="e.g. AA100" @keyup.enter="search" />
+          <button @click="search">Search</button>
+        </div>
+        <div class="helper">GET <code>/flights/{flightNumber}</code></div>
+        <div v-if="error" class="helper" style="color: var(--danger);">{{ error }}</div>
+
+        <div v-if="flight" style="margin-top: 12px;">
+          <table>
+            <tbody>
+              <tr><td class="muted">Flight</td><td>{{ flight.flightNumber }}</td></tr>
+              <tr><td class="muted">Airline</td><td>{{ flight.airline }}</td></tr>
+              <tr><td class="muted">Route</td><td>{{ flight.origin }} → {{ flight.destination }}</td></tr>
+              <tr><td class="muted">Scheduled</td><td>{{ flight.scheduledDeparture }}</td></tr>
+              <tr><td class="muted">Actual</td><td>{{ flight.actualDeparture ?? '—' }}</td></tr>
+              <tr><td class="muted">Status</td><td><span class="pill" :class="{bad: flight.status==='DELAYED', good: flight.status==='ON_TIME'}">{{ flight.status }}</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="footer">Powered by Kafka Streams state stores • Refreshing live data</div>
+</div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script>
+const { createApp } = Vue;
+createApp({
+  data() {
+    return {
+      port: window.location.port || '9100',
+      delayed: {},
+      query: '',
+      flight: null,
+      error: '',
+      refreshSeconds: 5,
+      timer: null
+    };
+  },
+  computed: {
+    delayedSorted() {
+      const entries = Object.entries(this.delayed);
+      entries.sort((a,b) => b[1]-a[1]);
+      return Object.fromEntries(entries);
+    }
+  },
+  methods: {
+    async fetchDelayed() {
+      try {
+        const res = await fetch('/airports/delayed');
+        if (!res.ok) throw new Error('Failed to load delayed counts');
+        this.delayed = await res.json();
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    async search() {
+      this.error = '';
+      this.flight = null;
+      const q = (this.query || '').trim();
+      if (!q) return;
+      try {
+        const res = await fetch('/flights/' + encodeURIComponent(q));
+        if (res.status === 404) {
+          this.error = 'Flight not found';
+          return;
+        }
+        if (!res.ok) throw new Error('Request failed');
+        this.flight = await res.json();
+      } catch (e) {
+        console.error(e);
+        this.error = 'Error fetching flight';
+      }
+    }
+  },
+  mounted() {
+    this.fetchDelayed();
+    this.timer = setInterval(this.fetchDelayed, this.refreshSeconds * 1000);
+  },
+  beforeUnmount() { if (this.timer) clearInterval(this.timer); }
+}).mount('#app');
+</script>
+</body>
+</html>

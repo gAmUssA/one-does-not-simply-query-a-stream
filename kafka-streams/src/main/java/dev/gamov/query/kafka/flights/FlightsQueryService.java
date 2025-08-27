@@ -13,6 +13,7 @@ import java.util.Map;
 
 import io.confluent.developer.models.flight.Flight;
 import io.javalin.Javalin;
+import io.javalin.http.staticfiles.Location;
 
 public class FlightsQueryService {
 
@@ -22,7 +23,17 @@ public class FlightsQueryService {
     int port = Integer.parseInt(System.getenv().getOrDefault("FLIGHTS_QUERY_PORT", "9100"));
     Javalin app = Javalin.create(config -> {
       config.showJavalinBanner = false;
+      // Serve static files from classpath:/public
+      config.staticFiles.add(staticFiles -> {
+        staticFiles.hostedPath = "/"; // root
+        staticFiles.directory = "/public"; // src/main/resources/public
+        staticFiles.location = Location.CLASSPATH;
+        staticFiles.precompress = false;
+      });
     }).start(port);
+
+    // Root redirects to the UI
+    app.get("/", ctx -> ctx.redirect("/index.html"));
 
     app.get("/flights/{flightNumber}", ctx -> {
       String flightNumber = ctx.pathParam("flightNumber");
