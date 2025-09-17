@@ -35,3 +35,5 @@ kwack/kwack-*
 kwack/tmp
 kafka-connect/data
 .env
+*.wal
+risingwave/1.sql
