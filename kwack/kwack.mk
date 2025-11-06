@@ -28,7 +28,7 @@ KWACK_VERSION := 0.4.0
 KWACK_ROOT_DIR := $(shell if [ -f "../.env" ] && [ "$$(basename $$(pwd))" = "kwack" ]; then echo ".."; else echo "."; fi)
 KWACK_DIR := $(KWACK_ROOT_DIR)/kwack/kwack-$(KWACK_VERSION)
 KWACK_DOWNLOAD_URL := https://github.com/rayokota/kwack/releases/download/v$(KWACK_VERSION)/kwack-$(KWACK_VERSION)-package.zip
-KWACK_ENV_FILE := $(KWACK_ROOT_DIR)/.env
+KWACK_ENV_FILE := .env
 KWACK_CONFIG_FILE := $(KWACK_ROOT_DIR)/kwack/kwack.properties
 KWACK_LOG_CONFIG := $(KWACK_ROOT_DIR)/kwack/log4j.properties
 
@@ -93,36 +93,39 @@ $(KWACK_CONFIG_FILE): $(KWACK_ENV_FILE)
 >   exit 1; \
 > fi
 > @printf "$(BLUE)📝 Using kwack.properties.example as template...$(NC)\n"
+> @printf "# 🦆 Kwack Configuration - Generated from .env on %s\n" "$(shell date)" > $(KWACK_CONFIG_FILE)
+> @printf "# Topics to manage (from TOPIC_NAME in .env)\n" >> $(KWACK_CONFIG_FILE)
 > @source $(KWACK_ENV_FILE) && \
-> cat > $(KWACK_CONFIG_FILE) << EOF
-> # 🦆 Kwack Configuration - Generated from .env on $(shell date)
-> # Topics to manage (from TOPIC_NAME in .env)
-> topics=${TOPIC_NAME:-flights}
-> 
-> # Key serdes (default is binary)
-> key.serdes=${TOPIC_NAME:-flights}=string
-> 
-> # Value serdes (default is latest - use Schema Registry)
-> value.serdes=${TOPIC_NAME:-flights}=latest
-> 
-> # 🌐 Confluent Cloud Schema Registry Configuration
-> schema.registry.url=${SCHEMA_REGISTRY_URL}
-> basic.auth.credentials.source=USER_INFO
-> basic.auth.user.info=${SCHEMA_REGISTRY_API_KEY}:${SCHEMA_REGISTRY_API_SECRET}
-> 
-> # 🔌 Confluent Cloud Kafka Configuration
-> bootstrap.servers=${BOOTSTRAP_SERVERS}
-> security.protocol=SASL_SSL
-> sasl.jaas.config=${SASL_JAAS_CONFIG}
-> sasl.mechanism=PLAIN
-> 
-> # 🦆 DuckDB Configuration
-> # Use in-memory database by default
-> # Override with -d option for persistent storage
-> EOF
+> printf "topics=%s\n" "$${TOPIC_NAME:-flights}" >> $(KWACK_CONFIG_FILE)
+> @printf "\n# Key serdes (default is binary)\n" >> $(KWACK_CONFIG_FILE)
+> @source $(KWACK_ENV_FILE) && \
+> printf "key.serdes=%s=string\n" "$${TOPIC_NAME:-flights}" >> $(KWACK_CONFIG_FILE)
+> @printf "\n# Value serdes (use avro with Schema Registry)\n" >> $(KWACK_CONFIG_FILE)
+> @source $(KWACK_ENV_FILE) && \
+> printf "value.serdes=%s=avro\n" "$${TOPIC_NAME:-flights}" >> $(KWACK_CONFIG_FILE)
+> @printf "\n# 🌐 Confluent Cloud Schema Registry Configuration\n" >> $(KWACK_CONFIG_FILE)
+> @source $(KWACK_ENV_FILE) && \
+> printf "schema.registry.url=%s\n" "$$SCHEMA_REGISTRY_URL" >> $(KWACK_CONFIG_FILE)
+> @printf "basic.auth.credentials.source=USER_INFO\n" >> $(KWACK_CONFIG_FILE)
+> @source $(KWACK_ENV_FILE) && \
+> printf "basic.auth.user.info=%s:%s\n" "$$SCHEMA_REGISTRY_API_KEY" "$$SCHEMA_REGISTRY_API_SECRET" >> $(KWACK_CONFIG_FILE)
+> @printf "\n# 🔌 Confluent Cloud Kafka Configuration\n" >> $(KWACK_CONFIG_FILE)
+> @source $(KWACK_ENV_FILE) && \
+> printf "bootstrap.servers=%s\n" "$$BOOTSTRAP_SERVERS" >> $(KWACK_CONFIG_FILE)
+> @printf "security.protocol=SASL_SSL\n" >> $(KWACK_CONFIG_FILE)
+> @source $(KWACK_ENV_FILE) && \
+> printf "sasl.jaas.config=%s\n" "$$SASL_JAAS_CONFIG" >> $(KWACK_CONFIG_FILE)
+> @printf "sasl.mechanism=PLAIN\n" >> $(KWACK_CONFIG_FILE)
+> @printf "\n# 🦆 DuckDB Configuration\n" >> $(KWACK_CONFIG_FILE)
+> @printf "# Use in-memory database by default\n" >> $(KWACK_CONFIG_FILE)
+> @printf "# Override with -d option for persistent storage\n" >> $(KWACK_CONFIG_FILE)
 
 kwack-build: kwack-install kwack-configure ## 🏗️ Build kwack (install + configure)
 > @printf "$(GREEN)🏗️ Kwack build complete$(NC)\n"
+
+kwack-analyze: kwack-build ## 🦆 Run kwack analysis - import Kafka data and execute flight queries
+> @printf "$(BLUE)🦆 Starting kwack flight data analysis...$(NC)\n"
+> @./kwack/run-kwack-analysis.sh
 
 kwack-test: kwack-build
 > @printf "$(BLUE)🧪 Testing kwack installation...$(NC)\n"

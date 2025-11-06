@@ -11,12 +11,12 @@ repositories {
 
 dependencies {
     // Kafka Streams dependencies
-    implementation("org.apache.kafka:kafka-streams:3.9.1")
-    implementation("org.apache.kafka:kafka-clients:3.9.1")
+    implementation("org.apache.kafka:kafka-streams:4.1.0")
+    implementation("org.apache.kafka:kafka-clients:4.1.0")
 
     // Confluent Avro SerDes and Avro
-    implementation("io.confluent:kafka-streams-avro-serde:7.9.1")
-    implementation("io.confluent:kafka-avro-serializer:7.9.1")
+    implementation("io.confluent:kafka-streams-avro-serde:8.1.0")
+    implementation("io.confluent:kafka-avro-serializer:8.1.0")
     implementation("org.apache.avro:avro:1.12.0")
 
     // Logging dependencies

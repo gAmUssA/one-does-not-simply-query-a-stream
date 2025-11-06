@@ -8,8 +8,8 @@
 --
 -- Prerequisites:
 -- 1. Configure your .env file with Confluent Cloud credentials
--- 2. Start RisingWave: make start
--- 3. Run with variable substitution: envsubst < confluent-cloud-examples.sql | docker compose exec -i psql-client psql -h risingwave -p 4566 -d dev -U root
+-- 2. Start RisingWave: `make start`
+-- 3. Run with variable substitution: `envsubst < confluent-cloud-examples.sql | docker compose exec -i psql-client psql -h risingwave -p 4566 -d dev -U root`
 
 -- =====================================================
 -- 1. CREATE AVRO SOURCE WITH SCHEMA REGISTRY

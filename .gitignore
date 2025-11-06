@@ -37,3 +37,4 @@ kafka-connect/data
 .env
 *.wal
 risingwave/1.sql
+kafka-streams/src/main/resources/cloud.properties

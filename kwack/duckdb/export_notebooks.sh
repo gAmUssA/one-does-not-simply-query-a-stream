@@ -28,7 +28,7 @@ jq -c '.[]' "$temp_file" | while read -r item; do
 
     # Extract all queries from the notebook JSON and save them to the file
     # Credit to Hayley Jane Wakenshaw for the Duck ASCII art :)
-    echo "$item" | jq -r '.json' | jq -r '.cells[] | "\n--           _      _      _\n--         >(.)__ <(.)__ =(.)__\n--          (___/  (___/  (___/ \n-- °º¤ø,¸¸,ø¤º°`°º¤ø,¸,ø¤°º¤ø,¸¸,ø¤º°`°º¤ø,¸\n\n" + .query' > "$output_dir/${filename}"
+    echo "$item" | jq -r '.json' | jq -r '.cells[] | .query' > "$output_dir/${filename}"
 
     echo "Created file: $filename"
 done
